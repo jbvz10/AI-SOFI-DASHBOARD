@@ -12,24 +12,41 @@ import streamlit as st
 
 start_date = "2023-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d')
-ticker = "SOFI"
+ticker = st.sidebar.text_input("Ticker Symbol", value="SOFI").upper()
+
+# Editable form for options
+st.sidebar.subheader("✏️ Update Option Position")
+with st.sidebar.form("update_option_form"):
+    leg_type = st.selectbox("Leg Type", ["long_legs", "short_legs"])
+    option_name = st.text_input("Option Name")
+    contracts = st.number_input("Contracts", step=1)
+    avg_price = st.number_input("Avg Price")
+    last_price = st.number_input("Last Price")
+    submitted = st.form_submit_button("Add/Update")
+
+if submitted and option_name:
+    if leg_type not in ["long_legs", "short_legs"]:
+        st.error("Invalid leg type")
+    else:
+        if leg_type not in globals():
+            st.error(f"Portfolio missing {leg_type} definition")
+        else:
+            if leg_type not in portfolio:
+                portfolio[leg_type] = {}
+            portfolio[leg_type][option_name] = {
+                "contracts": contracts,
+                "avg_price": avg_price,
+                "last_price": last_price
+            }
+            st.success(f"Updated {leg_type} → {option_name}")
 
 portfolio = {
     "entry_price": 7.15,
     "shares": 200,
     "entry_date": "2024-03-01",
     "strategy": "double_diagonal",
-    "long_legs": {
-        "SOFI Jan25 12 Call": {"contracts": 12, "avg_price": 4.322, "last_price": 2.90},
-        "SOFI Jan25 12 Put": {"contracts": 13, "avg_price": 3.657, "last_price": 4.78}
-    },
-    "short_legs": {
-        "SOFI Apr11 12.5 Call": {"contracts": -3, "avg_price": 0.507, "last_price": 0.04},
-        "SOFI Apr11 12.5 Put": {"contracts": -3, "avg_price": 0.742, "last_price": 2.71},
-        "SOFI Apr11 10.5 Put": {"contracts": -2, "avg_price": 0.432, "last_price": 1.40},
-        "SOFI May02 11 Put": {"contracts": -3, "avg_price": 1.142, "last_price": 2.16},
-        "SOFI May16 13 Call": {"contracts": -2, "avg_price": 1.292, "last_price": 0.30}
-    }
+    "long_legs": portfolio.get("long_legs", {}),
+    "short_legs": portfolio.get("short_legs", {})
 }
 
 def calculate_option_pnl(legs):
@@ -95,6 +112,8 @@ long_legs_df = calculate_option_pnl(portfolio['long_legs'])
 short_legs_df = calculate_option_pnl(portfolio['short_legs'])
 options_pnl_df = pd.concat([long_legs_df, short_legs_df], ignore_index=True)
 total_pnl = options_pnl_df['Unrealized P&L'].sum()
+long_total = long_legs_df['Unrealized P&L'].sum()
+short_total = short_legs_df['Unrealized P&L'].sum()
 
 rec_exp, rec_call, rec_put = recommend_weekly_shorts(ticker)
 
@@ -104,9 +123,23 @@ st.title("📊 SOFI Double Diagonal Strategy Dashboard")
 st.subheader("💼 Portfolio Position")
 st.markdown(f"**Shares:** {portfolio['shares']} @ ${portfolio['entry_price']} (Since {portfolio['entry_date']})")
 
+st.subheader("📉 SOFI Price Chart")
+price_data = yf.Ticker(ticker).history(start=start_date, end=end_date)
+st.line_chart(price_data['Close'], use_container_width=True)
+
 st.subheader("📈 Options Legs Unrealized P&L")
 st.dataframe(options_pnl_df, use_container_width=True)
 st.markdown(f"**Total Unrealized P&L: ${total_pnl:,.2f}**")
+st.markdown(f"🔹 Long Legs P&L: ${long_total:,.2f}  |  🔸 Short Legs P&L: ${short_total:,.2f}")
+
+csv = options_pnl_df.to_csv(index=False).encode('utf-8')
+st.download_button("📥 Download P&L Data", csv, "sofi_pnl.csv", "text/csv")
+
+st.subheader("🧠 Sentiment Score")
+analyzer = SentimentIntensityAnalyzer()
+headline = "SOFI stock rises after earnings beat expectations"
+sentiment = analyzer.polarity_scores(headline)
+st.metric("Headline Sentiment", sentiment['compound'])
 
 st.subheader("📌 Recommended Weekly Options to Short")
 if rec_exp:
@@ -120,4 +153,5 @@ if rec_exp:
         st.dataframe(rec_put)
 else:
     st.warning("No options data available for recommendations.")
+
 
