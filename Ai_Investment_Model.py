@@ -94,6 +94,7 @@ def recommend_weekly_shorts(ticker):
 long_legs_df = calculate_option_pnl(portfolio['long_legs'])
 short_legs_df = calculate_option_pnl(portfolio['short_legs'])
 options_pnl_df = pd.concat([long_legs_df, short_legs_df], ignore_index=True)
+total_pnl = options_pnl_df['Unrealized P&L'].sum()
 
 rec_exp, rec_call, rec_put = recommend_weekly_shorts(ticker)
 
@@ -105,6 +106,7 @@ st.markdown(f"**Shares:** {portfolio['shares']} @ ${portfolio['entry_price']} (S
 
 st.subheader("📈 Options Legs Unrealized P&L")
 st.dataframe(options_pnl_df, use_container_width=True)
+st.markdown(f"**Total Unrealized P&L: ${total_pnl:,.2f}**")
 
 st.subheader("📌 Recommended Weekly Options to Short")
 if rec_exp:
@@ -118,3 +120,4 @@ if rec_exp:
         st.dataframe(rec_put)
 else:
     st.warning("No options data available for recommendations.")
+
