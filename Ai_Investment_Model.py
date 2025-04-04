@@ -125,17 +125,20 @@ sentiment = analyzer.polarity_scores(headline)
 st.metric("Headline Sentiment", sentiment['compound'])
 
 st.subheader("📌 Recommended Weekly Options to Short")
-if rec_exp:
+if rec_exp is not None:
     st.markdown(f"**Expiration Date:** {rec_exp}")
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Call to Short:**")
-        st.dataframe(rec_call)
+        if rec_call is not None:
+            st.dataframe(rec_call)
+        else:
+            st.info("No suitable call option found.")
     with col2:
         st.markdown("**Put to Short:**")
-        st.dataframe(rec_put)
+        if rec_put is not None:
+            st.dataframe(rec_put)
+        else:
+            st.info("No suitable put option found.")
 else:
     st.warning("No options data available for recommendations.")
-
-
-
