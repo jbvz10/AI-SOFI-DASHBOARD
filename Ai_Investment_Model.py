@@ -14,39 +14,22 @@ start_date = "2023-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d')
 ticker = st.sidebar.text_input("Ticker Symbol", value="SOFI").upper()
 
-# Editable form for options
-st.sidebar.subheader("✏️ Update Option Position")
-with st.sidebar.form("update_option_form"):
-    leg_type = st.selectbox("Leg Type", ["long_legs", "short_legs"])
-    option_name = st.text_input("Option Name")
-    contracts = st.number_input("Contracts", step=1)
-    avg_price = st.number_input("Avg Price")
-    last_price = st.number_input("Last Price")
-    submitted = st.form_submit_button("Add/Update")
-
-if submitted and option_name:
-    if leg_type not in ["long_legs", "short_legs"]:
-        st.error("Invalid leg type")
-    else:
-        if leg_type not in globals():
-            st.error(f"Portfolio missing {leg_type} definition")
-        else:
-            if leg_type not in portfolio:
-                portfolio[leg_type] = {}
-            portfolio[leg_type][option_name] = {
-                "contracts": contracts,
-                "avg_price": avg_price,
-                "last_price": last_price
-            }
-            st.success(f"Updated {leg_type} → {option_name}")
-
 portfolio = {
     "entry_price": 7.15,
     "shares": 200,
     "entry_date": "2024-03-01",
     "strategy": "double_diagonal",
-    "long_legs": portfolio.get("long_legs", {}),
-    "short_legs": portfolio.get("short_legs", {})
+    "long_legs": {
+        "SOFI Jan25 12 Call": {"contracts": 12, "avg_price": 4.322, "last_price": 2.90},
+        "SOFI Jan25 12 Put": {"contracts": 13, "avg_price": 3.657, "last_price": 4.78}
+    },
+    "short_legs": {
+        "SOFI Apr11 12.5 Call": {"contracts": -3, "avg_price": 0.507, "last_price": 0.04},
+        "SOFI Apr11 12.5 Put": {"contracts": -3, "avg_price": 0.742, "last_price": 2.71},
+        "SOFI Apr11 10.5 Put": {"contracts": -2, "avg_price": 0.432, "last_price": 1.40},
+        "SOFI May02 11 Put": {"contracts": -3, "avg_price": 1.142, "last_price": 2.16},
+        "SOFI May16 13 Call": {"contracts": -2, "avg_price": 1.292, "last_price": 0.30}
+    }
 }
 
 def calculate_option_pnl(legs):
@@ -153,5 +136,6 @@ if rec_exp:
         st.dataframe(rec_put)
 else:
     st.warning("No options data available for recommendations.")
+
 
 
