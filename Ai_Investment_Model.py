@@ -15,7 +15,7 @@ import requests
 start_date = "2023-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d')
 
-st_autorefresh = st.experimental_memo(ttl=120)
+@st.cache_data(ttl=120)
 def trigger_autorefresh():
     return datetime.now()
 
