@@ -233,7 +233,7 @@ with st.expander("🔍 Filter Trade Log"):
     filter_df = filter_df[(filter_df['PnL'] >= min_pnl) & (filter_df['PnL'] <= max_pnl)]
 st.dataframe(filter_df, use_container_width=True)
 
-st.download_button("⬇️ Download Trade History", filter_df.to_csv(index=False).encode('utf-8'), "trade_log.csv").encode('utf-8'), "trade_log.csv")
+st.download_button("⬇️ Download Trade History", filter_df.to_csv(index=False).encode('utf-8'), "trade_log.csv")
 
 st.subheader("📈 Weekly Performance Summary")
 if not filter_df.empty:
