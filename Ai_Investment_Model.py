@@ -14,7 +14,15 @@ import requests
 
 start_date = "2023-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d')
+
+st_autorefresh = st.experimental_memo(ttl=120)
+def trigger_autorefresh():
+    return datetime.now()
+
+trigger_autorefresh()
+
 ticker = st.sidebar.text_input("Ticker Symbol", value="SOFI").upper()
+refresh = st.sidebar.button("🔁 Refresh Dashboard")
 
 portfolio = {
     "entry_price": 7.15,
@@ -93,6 +101,9 @@ def recommend_weekly_shorts(ticker):
             continue
     return fallback_alpha_vantage_chain(ticker)
 
+if refresh:
+    st.experimental_rerun()
+
 long_legs_df = calculate_option_pnl(portfolio['long_legs'])
 short_legs_df = calculate_option_pnl(portfolio['short_legs'])
 options_pnl_df = pd.concat([long_legs_df, short_legs_df], ignore_index=True)
@@ -143,4 +154,3 @@ if rec_exp is not None:
             st.info("No suitable put option found.")
 else:
     st.warning("No options data available for recommendations.")
-
