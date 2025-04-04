@@ -244,6 +244,20 @@ if not filter_df.empty:
     st.dataframe(agg, use_container_width=True)
 
 st.subheader("📡 AI Alerts & Commentary")
+st.line_chart(price_data[['Close', 'EMA12', 'EMA26', 'Upper_BB', 'Lower_BB']], use_container_width=True)
+
+price_data['EMA12'] = price_data['Close'].ewm(span=12, adjust=False).mean()
+price_data['EMA26'] = price_data['Close'].ewm(span=26, adjust=False).mean()
+price_data['MACD'] = price_data['EMA12'] - price_data['EMA26']
+price_data['Signal'] = price_data['MACD'].ewm(span=9, adjust=False).mean()
+
+price_data['20_MA'] = price_data['Close'].rolling(window=20).mean()
+price_data['Upper_BB'] = price_data['20_MA'] + 2 * price_data['Close'].rolling(window=20).std()
+price_data['Lower_BB'] = price_data['20_MA'] - 2 * price_data['Close'].rolling(window=20).std()
+
+rsi_data = price_data['Close'].rolling(window=14).apply(lambda x: 100 - (100 / (1 + (x.pct_change().mean() / x.pct_change().std()))))
+rsi = rsi_data.iloc[-1] if not rsi_data.empty else None
+
 commentary = []
 if sentiment['compound'] > 0.4:
     commentary.append("🔔 Positive news sentiment detected — potential for short-term upside.")
@@ -252,6 +266,21 @@ if rsi is not None:
         commentary.append("📈 RSI indicates oversold — bounce expected.")
     elif rsi > 70:
         commentary.append("⚠️ RSI is overbought — caution warranted.")
+macd = price_data['MACD'].iloc[-1]
+signal = price_data['Signal'].iloc[-1]
+if macd > signal:
+    commentary.append("📊 MACD bullish crossover detected.")
+elif macd < signal:
+    commentary.append("📉 MACD bearish crossover detected.")
+
+latest_price = price_data['Close'].iloc[-1]
+upper_bb = price_data['Upper_BB'].iloc[-1]
+lower_bb = price_data['Lower_BB'].iloc[-1]
+if latest_price > upper_bb:
+    commentary.append("📈 Price above upper Bollinger Band — potential pullback.")
+elif latest_price < lower_bb:
+    commentary.append("📉 Price below lower Bollinger Band — potential bounce.")
+
 if not commentary:
     commentary.append("No strong signals detected.")
 for line in commentary:
@@ -317,3 +346,4 @@ try:
                      .style.applymap(highlight_oi, subset=['openInterest']), use_container_width=True)
 except Exception as e:
     st.error(f"Error loading options chain: {e}")
+
