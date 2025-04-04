@@ -1,5 +1,8 @@
 # AI Weekly Swing Trading Streamlit Dashboard (SOFI + Options Analysis)
 
+import streamlit as st
+st.set_page_config(page_title="SOFI Options Dashboard", layout="wide")
+
 import pandas as pd
 import numpy as np
 import yfinance as yf
@@ -8,7 +11,6 @@ from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 import time
 import json
 import requests
-import streamlit as st
 
 start_date = "2023-01-01"
 end_date = datetime.today().strftime('%Y-%m-%d')
@@ -100,7 +102,6 @@ short_total = short_legs_df['Unrealized P&L'].sum()
 
 rec_exp, rec_call, rec_put = recommend_weekly_shorts(ticker)
 
-st.set_page_config(page_title="SOFI Options Dashboard", layout="wide")
 st.title("📊 SOFI Double Diagonal Strategy Dashboard")
 
 st.subheader("💼 Portfolio Position")
@@ -142,3 +143,4 @@ if rec_exp is not None:
             st.info("No suitable put option found.")
 else:
     st.warning("No options data available for recommendations.")
+
